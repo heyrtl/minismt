@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "minismt"
+version = "0.1.0"
+description = "DPLL(T) SMT solver for QF_UF in Python: CDCL, congruence closure, SMT-LIB. Educational, zero deps."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Your Name", email = "you@example.com" }]
+keywords = ["smt", "sat", "solver", "dpll", "cdcl", "congruence-closure", "euf"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Intended Audience :: Developers",
+    "Development Status :: 3 - Alpha",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff", "mypy"]
+
+[project.scripts]
+minismt = "minismt.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/YOU/minismt"
+Issues = "https://github.com/YOU/minismt/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/minismt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

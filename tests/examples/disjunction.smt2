@@ -1,0 +1,8 @@
+(set-logic QF_UF)
+(declare-fun x () U)
+(declare-fun y () U)
+(declare-fun z () U)
+(assert (or (= x y) (= y z)))
+(assert (not (= x y)))
+(assert (not (= y z)))
+(check-sat)
