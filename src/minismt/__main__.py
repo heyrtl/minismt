@@ -1,6 +1,6 @@
 """CLI entry point: `minismt <file.smt2>` or `python -m minismt <file.smt2>`."""
 import sys
-from .solver import run
+from .parser import run
 
 
 def main(argv=None):

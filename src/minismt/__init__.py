@@ -1,8 +1,8 @@
-"""minismt — a minimal SMT solver for QF_UF.
+"""minismt — a minimal SMT solver for QF_UF."""
+from .parser import run, tokenize, parse_expr
+from .dpllt import SMT
+from .sat import SAT
+from .cc import CC
 
-CDCL SAT core + congruence closure, wired together in a DPLL(T) loop.
-"""
-from .solver import run, SMT, SAT, CC
-
-__version__ = "0.1.0"
-__all__ = ["run", "SMT", "SAT", "CC", "__version__"]
+__version__ = "0.2.0"
+__all__ = ["run", "tokenize", "parse_expr", "SMT", "SAT", "CC", "__version__"]

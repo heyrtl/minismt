@@ -13,28 +13,28 @@ Zero runtime dependencies. Pure Python 3.8+.
 
 ## What it is
 
-- A readable, ~350-line reference implementation of DPLL(T) + congruence closure.
+- A readable reference implementation of DPLL(T) + congruence closure, split across `sat.py`, `cc.py`, `dpllt.py`, `parser.py`.
 - A working QF_UF solver that handles transitivity, symmetry, congruence, negation, and propositional combinations (`and`, `or`, `=>`, `not`, `distinct`).
 - A starting point for adding more theories (LRA, bit-vectors, arrays).
 
 ## What it is **not**
 
 - **Not** a drop-in replacement for Z3 or cvc5. Not even close on performance.
-- **Not** production software. No proofs, no unsat cores, no `get-model`, no incremental solving.
+- **Not** production software. No proofs, no unsat cores, no incremental solving.
 - **Not** covering the full SMT-LIB standard. See [Limitations](#limitations).
 
 ## Install
 
 ```bash
-git clone https://github.com/YOU/minismt.git
-cd minismt
-python -m pip install -e ".[dev]"
+pip install minismt
 ```
 
-Or, no install, just run it:
+From source:
 
 ```bash
-python -m minismt tests/examples/congruence.smt2
+git clone https://github.com/heyrtl/minismt.git
+cd minismt
+python -m pip install -e ".[dev]"
 ```
 
 ## Usage
@@ -63,6 +63,26 @@ result = run("""
 print(result)   # "unsat"
 ```
 
+### Getting a model
+
+```python
+result = run("""
+(set-logic QF_UF)
+(declare-fun x () U)(declare-fun y () U)(declare-fun z () U)
+(assert (= x y))(assert (not (= x z)))
+(check-sat)(get-model)
+""")
+print(result)
+# sat
+# (
+#   (define-fun x () U x)
+#   (define-fun y () U x)
+#   (define-fun z () U z)
+# )
+```
+
+`get-model` prints one `define-fun` per variable, mapping each to its equivalence-class representative.
+
 ### Tests
 
 ```bash
@@ -73,14 +93,16 @@ pytest
 
 | Construct | Status |
 |---|---|
-| `set-logic`, `set-info`, `declare-sort`, `declare-fun`, `declare-const` | parsed, ignored (no sort checking) |
+| `set-logic`, `set-info`, `declare-sort` | parsed, ignored (no sort checking) |
+| `declare-fun`, `declare-const` | parsed, tracked for `get-model` |
 | `assert` | supported |
-| `check-sat` | supported (one per file) |
+| `check-sat` | supported |
+| `get-model` | supported |
 | `exit` | supported |
 | `=`, `not`, `and`, `or`, `=>`, `distinct` | supported |
 | Function application `(f x y)` | supported |
 | `let`, `ite`, `forall`, `exists` | **not** supported |
-| `push`, `pop`, `get-model`, `get-unsat-core` | **not** supported |
+| `push`, `pop`, `get-unsat-core` | **not** supported |
 
 ## How it works
 
@@ -106,27 +128,25 @@ SMT-LIB  ──parser──▶  AST  ──Tseitin──▶  CNF  ──CDCL─�
 4. **Explain.** Every merge in the union-find carries the set of SAT literals that caused it. If a disequality is violated, that reason set plus the disequality itself forms a conflict clause.
 5. **Learn.** The conflict clause is fed to `SAT.analyze()` exactly like a SAT conflict. New clause learned, backjump, continue.
 
-For the full breakdown, read the docstrings in `src/minismt/solver.py` — the three classes (`SAT`, `CC`, `SMT`) map 1:1 to the architecture.
+For the full breakdown, read the docstrings in `src/minismt/` — `sat.py` (CDCL), `cc.py` (congruence closure), `dpllt.py` (driver), `parser.py` (SMT-LIB).
 
 ## Limitations
 
 - **QF_UF only.** No arithmetic, arrays, or bit-vectors.
-- **One `check-sat` per file.** No incremental solving.
+- **No incremental solving.** `(check-sat)(get-model)` is supported, but calling `(check-sat)` twice in one file re-runs the search and is not guaranteed correct after new assertions.
 - **`theory_check()` is non-incremental.** It rebuilds the congruence-closure state on every call — correct but O(n²) per check.
 - **`CC.process()` is O(n³) worst case** on terms with large equivalence classes.
-- **No model output.** On `sat`, you get `sat` and nothing else.
 - **No proofs or unsat cores.**
 - **Parser is minimal.** No `let`, no `ite`, no nested `distinct`, no SMT-LIB round-tripping.
 
 ## Roadmap
 
-- [ ] **v0.2** — incremental congruence closure (push/pop on the trail)
-- [ ] **v0.2** — `(get-model)` printing equivalence classes
-- [ ] **v0.3** — split `solver.py` into `sat.py`, `cc.py`, `dpllt.py`, `parser.py`
-- [ ] **v0.3** — `let`, `ite`, and multiple `check-sat` in the parser
-- [ ] **v0.4** — `(get-unsat-core)`
-- [ ] **v0.5** — Linear Real Arithmetic via Simplex-for-DPLL(T)
-- [ ] **v0.6** — Bit-vectors via bit-blasting
+- [x] **v0.2** — module split + `(get-model)` printing equivalence classes
+- [ ] **v0.3** — incremental congruence closure (push/pop on the trail) + multiple `(check-sat)`
+- [ ] **v0.4** — `let`, `ite` in the parser
+- [ ] **v0.5** — `(get-unsat-core)`
+- [ ] **v0.6** — Linear Real Arithmetic via Simplex-for-DPLL(T)
+- [ ] **v0.7** — Bit-vectors via bit-blasting
 - [ ] **v1.0** — pass a meaningful subset of the SMT-LIB QF_UF benchmark suite
 
 ## References

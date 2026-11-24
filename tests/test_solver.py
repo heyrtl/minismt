@@ -43,3 +43,21 @@ EXAMPLES = Path(__file__).parent / "examples"
 )
 def test_example_files(path):
     assert run(path.read_text()) in ("sat", "unsat")
+
+
+def test_get_model():
+    src = (
+        "(set-logic QF_UF)"
+        "(declare-fun x () U)(declare-fun y () U)(declare-fun z () U)"
+        "(assert (= x y))(assert (not (= x z)))"
+        "(check-sat)(get-model)"
+    )
+    result = run(src)
+    lines = result.split("\n")
+    assert lines[0] == "sat"
+    reps = {}
+    for v in ("x", "y", "z"):
+        line = next(l for l in lines if f"define-fun {v}" in l)
+        reps[v] = line.rsplit(None, 1)[-1].rstrip(")")
+    assert reps["x"] == reps["y"]
+    assert reps["x"] != reps["z"]
