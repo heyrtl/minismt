@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "minismt"
-version = "0.3.0"
+version = "0.3.1"
 description = "DPLL(T) SMT solver for QF_UF in Python: CDCL, congruence closure, SMT-LIB. Educational, zero deps."
 readme = "README.md"
 requires-python = ">=3.10"
