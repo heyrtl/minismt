@@ -13,6 +13,7 @@ class SMT:
         self.atoms = {}
         self.v2a = {}
         self.top = []
+        self.assertion_asts = []        # ← new
         self._last_cc = None
         self._solved = False
         self._declared = set()
@@ -73,6 +74,7 @@ class SMT:
 
     def assert_f(self, f):
         self.top.append(self.enc(f))
+        self.assertion_asts.append(f)   # ← new
 
     def theory_check(self):
         cc = CC()
@@ -190,5 +192,53 @@ def check(*assertions: str, declarations: tuple[str, ...] = ()) -> Result:
         if idx != len(toks):
             raise ValueError(f"trailing tokens in assertion: {a!r}")
         smt.assert_f(expr)
+
     sat = smt.solve()
-    return Result(sat=sat, model=smt.model(declarations) if sat else None)
+    if not sat:
+        return Result(sat=False)
+
+    failures = validate_model(smt)
+    if failures:
+        raise UnsoundSatError(
+            f"sat returned but {len(failures)} assertion(s) fail under model: {failures}"
+        )
+    return Result(sat=True, model=smt.model(declarations))
+class UnsoundSatError(Exception):
+    """Raised when the solver returns sat but the model does not satisfy the assertions."""
+
+
+def _eval(cc, term):
+    """Representative of `term` under the current congruence closure."""
+    if term in cc.terms:
+        return cc.find(term)
+    return term
+
+
+def _eval_bool(cc, expr):
+    op = expr[0]
+    if op == '=':
+        return _eval(cc, expr[1]) == _eval(cc, expr[2])
+    if op == 'not':
+        return not _eval_bool(cc, expr[1])
+    if op == 'and':
+        return all(_eval_bool(cc, e) for e in expr[1:])
+    if op == 'or':
+        return any(_eval_bool(cc, e) for e in expr[1:])
+    if op == '=>':
+        return (not _eval_bool(cc, expr[1])) or _eval_bool(cc, expr[2])
+    if op == 'distinct':
+        reps = [_eval(cc, t) for t in expr[1:]]
+        return len(set(reps)) == len(reps)
+    raise ValueError(f"unknown operator: {op}")
+
+
+def validate_model(smt: SMT) -> list[str]:
+    """Return a list of assertion strings that fail under the current model.
+
+    Empty list means every assertion holds — the sat answer is sound.
+    Non-empty means the solver returned an unsound sat.
+    """
+    if not smt._solved or smt._last_cc is None:
+        return ["no solved model to validate"]
+    cc = smt._last_cc
+    return [repr(ast) for ast in smt.assertion_asts if not _eval_bool(cc, ast)]
