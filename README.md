@@ -9,7 +9,7 @@
 - a **DPLL(T)** driver that feeds theory conflicts back into the SAT engine as learned clauses;
 - a small **SMT-LIB v2** parser for the QF_UF subset.
 
-Zero runtime dependencies. Pure Python 3.8+.
+Zero runtime dependencies. Pure Python 3.10+.
 
 ## What it is
 
