@@ -1,5 +1,8 @@
 """DPLL(T) driver — Tseitin encoding + SAT + congruence closure."""
+from __future__ import annotations
 from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any
 from .sat import SAT
 from .cc import CC
 
@@ -12,6 +15,7 @@ class SMT:
         self.top = []
         self._last_cc = None
         self._solved = False
+        self._declared = set()
 
     def atom_eq(self, a, b):
         if repr(a) > repr(b):
@@ -153,3 +157,38 @@ class SMT:
             for v in members:
                 result[v] = rep
         return result
+
+    def declare_const(self, name: str) -> None:
+        """Register a constant symbol (for get-model / model())."""
+        self._declared.add(name)
+
+
+@dataclass
+class Result:
+    """Result of a satisfiability check."""
+    sat: bool
+    model: dict[str, Any] | None = None
+    reason: str | None = None      # "unsat" | "level-0" | "theory" — for debugging
+
+
+def check(*assertions: str, declarations: tuple[str, ...] = ()) -> Result:
+    """Check satisfiability of SMT-LIB assertion strings.
+
+    >>> check("(= x y)", "(not (= y x))", declarations=("x", "y")).sat
+    False
+    >>> check("(= x y)", declarations=("x", "y")).sat
+    True
+    """
+    from .parser import tokenize, parse_expr
+
+    smt = SMT()
+    for d in declarations:
+        smt.declare_const(d)
+    for a in assertions:
+        toks = tokenize(a)
+        expr, idx = parse_expr(toks, 0)
+        if idx != len(toks):
+            raise ValueError(f"trailing tokens in assertion: {a!r}")
+        smt.assert_f(expr)
+    sat = smt.solve()
+    return Result(sat=sat, model=smt.model(declarations) if sat else None)
