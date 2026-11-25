@@ -151,10 +151,11 @@ For the full breakdown, read the docstrings in `src/minismt/` — `sat.py` (CDCL
 
 ## References
 
-- Kroening & Strichman, *Decision Procedures: An Algorithmic Point of View* — the standard textbook.
-- Nieuwenhuis, Oliveras, Tinelli, *Solving SAT and SAT Modulo Theories* (2006) — the DPLL(T) paper.
-- Nelson & Oppen, *Fast Decision Procedures Based on Congruence Closure* (1980).
-- The "SAT / SMT 學習筆記" tutorial series — the best code-level walkthrough.
+- Kroening & Strichman, [*Decision Procedures: An Algorithmic Point of View*](https://www.decision-procedures.org/) ([PDF](https://vowi.fsinf.at/images/d/d8/TU_Wien-Formale_Methoden_der_Informatik_VU_%28Egly%29_-_Book_-_Decision_Procedures_An_Algorithmic_Point_of_View_-_Daniel_Kroening.pdf)) — the standard textbook.
+- Nieuwenhuis, Oliveras, Tinelli, [*Solving SAT and SAT Modulo Theories*](http://cse.unl.edu/~choueiry/Documents/SAT+SMT-nieuwenhuis.pdf) (2006) — the DPLL(T) paper.
+- Nelson & Oppen, [*Fast Decision Procedures Based on Congruence Closure*](https://dl.acm.org/doi/pdf/10.1145/322186.322198) (1980).
+- The "[SAT / SMT 學習筆記](https://zhuanlan.zhihu.com/p/151725312)" tutorial series — the best code-level walkthrough.
+
 
 ## License
 
