@@ -19,9 +19,11 @@ class SAT:
         self.phase = [True]
 
     def _i(self, lit):
-        v = abs(lit)
-        return v if lit > 0 else v + self.n
-
+        # Positive lit → 2*abs(lit), negative lit → 2*abs(lit)+1.
+        # Independent of self.n, so watches added before new variables
+        # are created stay valid.
+        return 2 * abs(lit) + (0 if lit > 0 else 1)
+    
     def new_var(self):
         self.n += 1
         self.val.append(None)
@@ -29,7 +31,7 @@ class SAT:
         self.reason.append(None)
         self.act.append(0.0)
         self.phase.append(True)
-        while len(self.watches) < 2 * self.n + 1:
+        while len(self.watches) < 2 * self.n + 2:
             self.watches.append([])
         return self.n
 
@@ -64,7 +66,9 @@ class SAT:
             return False
         if len(new) == 1:
             self.enq(new[0], None)
-            self.propagate()
+            if self.propagate() is not None:
+                self.ok = False
+                return False
             return self.ok
         cidx = len(self.clauses)
         self.clauses.append(new)

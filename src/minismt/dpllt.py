@@ -62,7 +62,13 @@ class SMT:
             self.sat.add_clause([-b, v])
             return v
         if op == 'distinct':
-            terms = f[1:]; neqs = []
+            terms = f[1:]
+            # Fast path: any duplicate term makes the whole formula trivially false
+            if len(set(map(repr, terms))) != len(terms):
+                v = self.sat.new_var()
+                self.sat.add_clause([-v])   # forces v = False at enc time
+                return v
+            neqs = []
             for i in range(len(terms)):
                 for j in range(i + 1, len(terms)):
                     neqs.append(-self.atom_eq(terms[i], terms[j]))
