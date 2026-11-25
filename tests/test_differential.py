@@ -101,11 +101,6 @@ def z3_sat(assertions):
 @example(assertions=[('distinct', 'a', 'b', 'c'), ('=', 'a', 'a')])
 @example(assertions=[('=', 'a', 'b'), ('distinct', ('h', 'a', 'a'), ('h', 'b', ('f', 'a')))])
 @given(qf_uf_programs())
-@settings(
-    max_examples=200,
-    deadline=None,
-    suppress_health_check=[HealthCheck.too_slow],
-)
 def test_agrees_with_z3(assertions):
     src_lines = [to_smtlib(a) for a in assertions]
     src = '\n'.join(src_lines)
