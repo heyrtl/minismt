@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "minismt"
-version = "0.2.0"
+version = "0.3.0"
 description = "DPLL(T) SMT solver for QF_UF in Python: CDCL, congruence closure, SMT-LIB. Educational, zero deps."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,7 +24,7 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "ruff", "mypy"]
+dev = ["pytest>=7", "ruff", "mypy", "hypothesis>=6", "z3-solver>=4.12"]
 
 [project.scripts]
 minismt = "minismt.__main__:main"

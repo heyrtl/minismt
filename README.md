@@ -16,6 +16,7 @@ Zero runtime dependencies. Pure Python 3.10+.
 - A readable reference implementation of DPLL(T) + congruence closure, split across `sat.py`, `cc.py`, `dpllt.py`, `parser.py`.
 - A working QF_UF solver that handles transitivity, symmetry, congruence, negation, and propositional combinations (`and`, `or`, `=>`, `not`, `distinct`).
 - A starting point for adding more theories (LRA, bit-vectors, arrays).
+- **Differentially tested against Z3** on 2000+ random QF_UF programs per deep run; model validation is on by default in `check()`.
 
 ## What it is **not**
 
@@ -48,6 +49,10 @@ unsat
 
 ### As a library
 
+Two entry points.
+
+**`run(text)`** — execute an SMT-LIB 2 string:
+
 ```python
 from minismt import run
 
@@ -62,6 +67,22 @@ result = run("""
 """)
 print(result)   # "unsat"
 ```
+
+**`check(*assertions)`** — programmatic API returning a `Result`:
+
+```python
+from minismt import check
+
+r = check("(= x y)", "(not (= y x))", declarations=("x", "y"))
+print(r.sat)    # False
+print(r.model)  # None
+
+r = check("(= x y)", declarations=("x", "y"))
+print(r.sat)    # True
+print(r.model)  # {'x': 'x', 'y': 'x'}
+```
+
+`check()` validates the returned model against every assertion by default. If the solver ever returns an unsound `sat`, it raises `UnsoundSatError` instead of returning a wrong answer.
 
 ### Getting a model
 
@@ -83,11 +104,15 @@ print(result)
 
 `get-model` prints one `define-fun` per variable, mapping each to its equivalence-class representative.
 
-### Tests
+### Testing
 
 ```bash
-pytest
+pytest                                            # 29 tests, ~15s
+pytest --hypothesis-profile=deep                  # + 2000 fuzz cases, ~3min
+pytest --hypothesis-profile=soak                  # + 20k fuzz cases, ~30min
 ```
+
+The fuzzer generates random QF_UF programs, runs them through both `minismt` and Z3, and fails on any disagreement. It also validates every `sat` model. Three soundness bugs in v0.2.0 were found this way — see the git log for `v0.3.0`.
 
 ## Supported SMT-LIB subset
 
@@ -142,11 +167,12 @@ For the full breakdown, read the docstrings in `src/minismt/` — `sat.py` (CDCL
 ## Roadmap
 
 - [x] **v0.2** — module split + `(get-model)` printing equivalence classes
-- [ ] **v0.3** — incremental congruence closure (push/pop on the trail) + multiple `(check-sat)`
-- [ ] **v0.4** — `let`, `ite` in the parser
-- [ ] **v0.5** — `(get-unsat-core)`
-- [ ] **v0.6** — Linear Real Arithmetic via Simplex-for-DPLL(T)
-- [ ] **v0.7** — Bit-vectors via bit-blasting
+- [x] **v0.3** — differential fuzzing vs Z3, model validation, `check()` API
+- [ ] **v0.4** — incremental congruence closure (push/pop on the trail) + multiple `(check-sat)`
+- [ ] **v0.5** — `let`, `ite` in the parser
+- [ ] **v0.6** — `(get-unsat-core)`
+- [ ] **v0.7** — Linear Real Arithmetic via Simplex-for-DPLL(T)
+- [ ] **v0.8** — Bit-vectors via bit-blasting
 - [ ] **v1.0** — pass a meaningful subset of the SMT-LIB QF_UF benchmark suite
 
 ## References
@@ -155,7 +181,6 @@ For the full breakdown, read the docstrings in `src/minismt/` — `sat.py` (CDCL
 - Nieuwenhuis, Oliveras, Tinelli, [*Solving SAT and SAT Modulo Theories*](http://cse.unl.edu/~choueiry/Documents/SAT+SMT-nieuwenhuis.pdf) (2006) — the DPLL(T) paper.
 - Nelson & Oppen, [*Fast Decision Procedures Based on Congruence Closure*](https://dl.acm.org/doi/pdf/10.1145/322186.322198) (1980).
 - The "[SAT / SMT 學習筆記](https://zhuanlan.zhihu.com/p/151725312)" tutorial series — the best code-level walkthrough.
-
 
 ## License
 
